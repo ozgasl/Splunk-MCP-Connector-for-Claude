@@ -9,6 +9,23 @@ A CLI setup wizard that configures [Claude Code](https://code.claude.com) to con
 - An **encrypted MCP token** generated from the Splunk MCP Server app
 - The **MCP server endpoint URL** from the Splunk MCP Server app
 
+## Project scope vs. Global scope
+
+The connector can be cloned **anywhere** on your machine — the clone location does not affect how it works. What matters is the **scope** you choose during setup, which controls where the generated config is written and which Claude Code sessions get Splunk access.
+
+| Scope | Config file written | Splunk tools available |
+|---|---|---|
+| **Project** | `.claude/mcp.json` inside your **current working directory** | Only when Claude Code is opened in that directory |
+| **Global** | `~/.claude/mcp.json` | In **every** Claude Code session on your machine |
+
+**Which should you choose?**
+- Use **global** if you query Splunk regularly and want it available across all your repos.
+- Use **project** to scope the connection to one specific repo (e.g., a Splunk app under development).
+
+**For project scope:** `cd` into your target project directory _before_ running the setup wizard — the wizard writes the config relative to your current directory.
+
+**For global scope:** run the wizard from any directory; the config is written to `~/.claude/mcp.json`.
+
 ## Getting Started
 
 ### Step 1 — Generate a Splunk MCP Token
@@ -22,18 +39,23 @@ A CLI setup wizard that configures [Claude Code](https://code.claude.com) to con
 ### Step 2 — Run the Setup Wizard
 
 ```bash
-# Clone the repo
+# Clone the repo (anywhere on your machine is fine)
 git clone https://github.com/ozgasl/splunk-mcp-connector-for-claude.git
 cd splunk-mcp-connector-for-claude
 
 # Install dependencies
 npm install
 
+# Optional: install globally so `splunk-mcp` is available as a system command
+npm install -g .
+
 # Run the setup wizard
-npm start setup
-# or
+splunk-mcp setup
+# or without global install:
 node bin/splunk-mcp.js setup
 ```
+
+> **Project scope tip:** if you want the config written into a specific project, `cd` into that project directory first, then run the wizard from there.
 
 The wizard will:
 1. Ask for your MCP endpoint URL
