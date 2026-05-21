@@ -48,15 +48,38 @@ export async function validateConnection({ endpoint, token, tlsVerify = true }) 
 
     return { ok: true };
   } catch (err) {
+    // Node's native fetch wraps all network/TLS errors as TypeError("fetch failed")
+    // with the real error (including .code) in err.cause.
+    const cause = err.cause ?? err;
+
     if (err.name === 'TimeoutError') {
       return { ok: false, error: 'Connection timed out after 10 seconds.' };
     }
-    if (err.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' || err.code === 'SELF_SIGNED_CERT_IN_CHAIN') {
+
+    const TLS_CODES = new Set([
+      'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+      'SELF_SIGNED_CERT_IN_CHAIN',
+      'DEPTH_ZERO_SELF_SIGNED_CERT',
+      'CERT_HAS_EXPIRED',
+      'ERR_TLS_CERT_ALTNAME_INVALID',
+    ]);
+    if (TLS_CODES.has(cause.code) || TLS_CODES.has(err.code)) {
       return {
         ok: false,
-        error: 'TLS certificate verification failed. Re-run setup and choose to skip TLS verification for self-signed certs.',
+        error: 'TLS certificate verification failed. Re-run setup and choose No for TLS verification.',
       };
     }
-    return { ok: false, error: err.message };
+
+    if (cause.code === 'ECONNREFUSED') {
+      return { ok: false, error: 'Connection refused. Check the endpoint URL and that the Splunk port is reachable.' };
+    }
+    if (cause.code === 'ENOTFOUND') {
+      return { ok: false, error: 'Host not found — check the hostname in your endpoint URL.' };
+    }
+    if (cause.code === 'ECONNRESET') {
+      return { ok: false, error: 'Connection reset by the server. Check the endpoint URL and port.' };
+    }
+
+    return { ok: false, error: cause.message ?? err.message };
   }
 }
