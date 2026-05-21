@@ -30,11 +30,30 @@ The connector can be cloned **anywhere** on your machine — the clone location 
 
 ### Step 1 — Generate a Splunk MCP Token
 
-1. Open the **Splunk MCP Server** app in your Splunk deployment
-2. Navigate to **Token Management** and generate a new encrypted token
-3. Copy the token immediately (it is only displayed once)
+The Splunk MCP Server uses **encrypted tokens** for authentication. These are distinct from regular Splunk tokens and must be generated from within the MCP Server app.
 
-> Required capabilities: `edit_tokens_own` + `mcp_tool_admin` (for your own token) or `edit_tokens_all` + `mcp_tool_admin` (for any user).
+**Required capabilities:**
+
+| Scenario | Required capabilities |
+|---|---|
+| Create a token for yourself | `edit_tokens_own` and `mcp_tool_admin` |
+| Create a token for any user | `edit_tokens_all` and `mcp_tool_admin` |
+
+If you do not have these capabilities, contact your Splunk administrator.
+
+**Steps:**
+
+1. Open the **Splunk MCP Server** app in your Splunk platform deployment
+2. Generate a new encrypted token
+3. Copy the token for use in your MCP client configuration — **it is only displayed once**
+
+**About your token:**
+
+- Tokens are credentials — guard them closely and do not share them
+- Encrypted tokens **cannot** be used for direct Splunk API calls; they are exclusively for MCP authentication
+- Tokens can be created and invalidated within the MCP app
+- Encrypted tokens are Splunk tokens and will appear on the main **Settings > Tokens** page, but must be *created* from within the MCP Server app
+- Set an appropriate expiration if the token is being created by an admin on behalf of another user
 
 ### Step 2 — Run the Setup Wizard
 
@@ -167,6 +186,8 @@ Once connected, Claude Code can use:
 | `splunk_*` | Core platform tools: search, indexes, saved searches, knowledge objects, alerts |
 | `saia_*` | AI Assistant tools: generate, explain, and optimize SPL queries |
 
+> **Tool management:** Splunk admins can enable or disable individual tools at the server level from the Splunk MCP Server app. Changes apply across all clients. `splunk_*` tools are **on by default**; `saia_*` tools may need to be activated by your admin. If an expected tool is missing, ask your admin to check the server-side tool settings.
+
 See [CLAUDE.md](./CLAUDE.md) for detailed tool documentation.
 
 ---
@@ -174,8 +195,9 @@ See [CLAUDE.md](./CLAUDE.md) for detailed tool documentation.
 ## Troubleshooting
 
 ### `Authentication failed (HTTP 401/403)`
-- Ensure you copied the token from the **Splunk MCP Server app** — tokens from Splunk's Settings > Tokens page are not valid here.
-- Tokens are encrypted and MCP-only; they cannot be used with the Splunk REST API directly.
+- Ensure the token was **generated from within the Splunk MCP Server app** — not via the Splunk REST API or any other method.
+- Verify you have the `mcp_tool_admin` capability plus either `edit_tokens_own` (for your own token) or `edit_tokens_all`.
+- Encrypted tokens are MCP-only and cannot be used with the Splunk REST API directly.
 
 ### `TLS certificate verification failed`
 - Re-run setup and answer **No** to the TLS verification prompt.
